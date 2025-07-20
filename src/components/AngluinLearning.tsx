@@ -89,6 +89,24 @@ const TEST_HYPOTHESIS = gql`
   }
 `;
 
+const GET_PENDING_ORACLE_QUERIES = gql`
+  query GetPendingOracleQueries($sessionId: Int!) {
+    pendingOracleQueries(sessionId: $sessionId) {
+      id
+      queryType
+      queryData
+      status
+      createdAt
+    }
+  }
+`;
+
+const ANSWER_ORACLE_QUERY = gql`
+  mutation AnswerOracleQuery($queryId: Int!, $response: String!) {
+    answerOracleQuery(queryId: $queryId, response: $response)
+  }
+`;
+
 const GET_SESSION_DETAILS = gql`
   query GetSessionDetails($sessionId: Int!) {
     learningSessionById(id: $sessionId) {
@@ -122,6 +140,14 @@ const GET_SESSION_DETAILS = gql`
         type
         createdAt
       }
+      oracleQueries {
+        id
+        queryType
+        queryData
+        response
+        status
+        createdAt
+      }
     }
   }
 `;
@@ -134,6 +160,8 @@ export default function AngluinLearning() {
   const [newExampleTarget, setNewExampleTarget] = useState("");
   const [newExampleType, setNewExampleType] = useState("positive");
   const [showCelebration, setShowCelebration] = useState(false);
+  const [oracleResponse, setOracleResponse] = useState("");
+  const [selectedQueryId, setSelectedQueryId] = useState<number | null>(null);
 
   const {
     data: sessionsData,
@@ -173,6 +201,18 @@ export default function AngluinLearning() {
 
   const [testHypothesis, { loading: testLoading }] = useMutation(
     TEST_HYPOTHESIS,
+    {
+      refetchQueries: [
+        {
+          query: GET_SESSION_DETAILS,
+          variables: { sessionId: selectedSession },
+        },
+      ],
+    }
+  );
+
+  const [answerOracleQuery, { loading: oracleLoading }] = useMutation(
+    ANSWER_ORACLE_QUERY,
     {
       refetchQueries: [
         {
@@ -247,6 +287,23 @@ export default function AngluinLearning() {
     }
   };
 
+  const handleAnswerOracleQuery = async () => {
+    if (!selectedQueryId || !oracleResponse.trim()) return;
+
+    try {
+      await answerOracleQuery({
+        variables: {
+          queryId: selectedQueryId,
+          response: oracleResponse,
+        },
+      });
+      setOracleResponse("");
+      setSelectedQueryId(null);
+    } catch (error) {
+      console.error("Error answering oracle query:", error);
+    }
+  };
+
   if (sessionsLoading) {
     return (
       <div className="flex justify-center p-8">
@@ -312,7 +369,7 @@ export default function AngluinLearning() {
       </div>
 
       <Tabs defaultValue="sessions" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm border border-gray-200">
+        <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm border border-gray-200">
           <TabsTrigger
             value="sessions"
             className="flex items-center space-x-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
@@ -333,6 +390,13 @@ export default function AngluinLearning() {
           >
             <Brain className="h-4 w-4" />
             <span>Hypotheses</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="oracle"
+            className="flex items-center space-x-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700"
+          >
+            <FlaskConical className="h-4 w-4" />
+            <span>Oracle</span>
           </TabsTrigger>
           <TabsTrigger
             value="demo"
@@ -786,6 +850,200 @@ export default function AngluinLearning() {
                 <p className="text-lg font-medium">No hypotheses yet</p>
                 <p className="text-sm text-muted-foreground">
                   Add examples and generate hypotheses to see them here
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="oracle" className="space-y-6">
+          {selectedSession ? (
+            <div className="space-y-6">
+              <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-purple-700">
+                    <FlaskConical className="h-6 w-6" />
+                    <span>Angluin's Oracle Queries</span>
+                  </CardTitle>
+                  <CardDescription className="text-lg">
+                    Answer membership and equivalence queries for Angluin's L*
+                    algorithm!
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {sessionDetails?.learningSessionById?.oracleQueries?.length >
+                  0 ? (
+                    <div className="space-y-4">
+                      {sessionDetails.learningSessionById.oracleQueries
+                        .filter((query: any) => query.status === "pending")
+                        .map((query: any) => (
+                          <div
+                            key={query.id}
+                            className="p-4 bg-white rounded-lg border-2 border-purple-200"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <Badge
+                                variant="outline"
+                                className={`${
+                                  query.queryType === "membership"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : "bg-green-100 text-green-800"
+                                }`}
+                              >
+                                {query.queryType === "membership"
+                                  ? "Membership Query"
+                                  : "Equivalence Query"}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(query.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+
+                            <div className="space-y-3">
+                              <div>
+                                <Label className="text-sm font-medium">
+                                  Query Data:
+                                </Label>
+                                <pre className="mt-1 p-2 bg-gray-100 rounded text-xs overflow-x-auto">
+                                  {query.queryData}
+                                </pre>
+                              </div>
+
+                              {query.queryType === "membership" ? (
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium">
+                                    Is this a valid transformation? (true/false)
+                                  </Label>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedQueryId(query.id);
+                                        setOracleResponse("true");
+                                        handleAnswerOracleQuery();
+                                      }}
+                                      disabled={oracleLoading}
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      Yes (true)
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedQueryId(query.id);
+                                        setOracleResponse("false");
+                                        handleAnswerOracleQuery();
+                                      }}
+                                      disabled={oracleLoading}
+                                      className="bg-red-600 hover:bg-red-700"
+                                    >
+                                      No (false)
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium">
+                                    Provide counterexample or confirm
+                                    equivalence:
+                                  </Label>
+                                  <div className="flex space-x-2">
+                                    <Input
+                                      placeholder="Enter counterexample JSON or 'equivalent'"
+                                      value={
+                                        selectedQueryId === query.id
+                                          ? oracleResponse
+                                          : ""
+                                      }
+                                      onChange={(e) => {
+                                        setSelectedQueryId(query.id);
+                                        setOracleResponse(e.target.value);
+                                      }}
+                                      className="flex-1"
+                                    />
+                                    <Button
+                                      onClick={() => handleAnswerOracleQuery()}
+                                      disabled={
+                                        oracleLoading || !oracleResponse.trim()
+                                      }
+                                      className="bg-purple-600 hover:bg-purple-700"
+                                    >
+                                      {oracleLoading && (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      )}
+                                      Answer
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                      {sessionDetails.learningSessionById.oracleQueries.filter(
+                        (query: any) => query.status !== "pending"
+                      ).length > 0 && (
+                        <div className="mt-6">
+                          <h3 className="text-lg font-medium mb-3">
+                            Answered Queries
+                          </h3>
+                          <div className="space-y-2">
+                            {sessionDetails.learningSessionById.oracleQueries
+                              .filter(
+                                (query: any) => query.status !== "pending"
+                              )
+                              .map((query: any) => (
+                                <div
+                                  key={query.id}
+                                  className="p-3 bg-gray-50 rounded border"
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <Badge
+                                      variant="outline"
+                                      className={`${
+                                        query.queryType === "membership"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : "bg-green-100 text-green-800"
+                                      }`}
+                                    >
+                                      {query.queryType === "membership"
+                                        ? "Membership"
+                                        : "Equivalence"}
+                                    </Badge>
+                                    <span className="text-sm text-muted-foreground">
+                                      Response: {query.response}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-4xl mb-4">🔮</div>
+                      <p className="text-lg font-medium">
+                        No oracle queries yet
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Generate a hypothesis using Angluin's algorithm to see
+                        oracle queries
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card className="border-2 border-gray-200 bg-gradient-to-r from-gray-50 to-slate-50">
+              <CardContent className="text-center py-12">
+                <div className="text-6xl mb-4">🔮</div>
+                <p className="text-lg font-medium">
+                  Select a learning session first
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Choose a session from the Sessions tab to view oracle queries
                 </p>
               </CardContent>
             </Card>

@@ -288,7 +288,7 @@ export default function FunFeatures({ selectedSession }: FunFeaturesProps) {
       )}
 
       {/* Fun Facts */}
-      {funFacts.length > 0 && (
+      {/*funFacts.length > 0 && (
         <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2 text-green-700">
@@ -323,7 +323,6 @@ export default function FunFeatures({ selectedSession }: FunFeaturesProps) {
                 </div>
               </div>
 
-              {/* Progress dots */}
               <div className="flex justify-center space-x-2 mt-4">
                 {funFacts.map((_: any, index: number) => (
                   <div
@@ -339,7 +338,7 @@ export default function FunFeatures({ selectedSession }: FunFeaturesProps) {
             </div>
           </CardContent>
         </Card>
-      )}
+      )}*/}
 
       {/* Learning Tips */}
       <Card className="border-2 border-slate-200 bg-gradient-to-r from-slate-50 to-gray-50">

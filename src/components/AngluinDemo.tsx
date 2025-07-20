@@ -314,7 +314,7 @@ export default function AngluinDemo() {
 
   return (
     <div className="space-y-6 relative">
-      {/* Celebration Animation */}
+      {/* Celebration Animation 
       {showCelebration && (
         <div className="fixed inset-0 pointer-events-none z-50">
           <div className="absolute inset-0 flex items-center justify-center">
@@ -334,8 +334,7 @@ export default function AngluinDemo() {
             🏆
           </div>
         </div>
-      )}
-
+      )}*/}
       {/* Header */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center space-x-2">
@@ -350,7 +349,6 @@ export default function AngluinDemo() {
           understand patterns!
         </p>
       </div>
-
       {/* Progress Steps */}
       <div className="flex justify-center">
         <div className="flex space-x-4">
@@ -385,7 +383,6 @@ export default function AngluinDemo() {
           ))}
         </div>
       </div>
-
       {/* Step 1: Start */}
       {currentStep === 1 && (
         <Card className="border-2 border-slate-200 bg-gradient-to-r from-slate-50 to-gray-50">
@@ -414,7 +411,6 @@ export default function AngluinDemo() {
           </CardContent>
         </Card>
       )}
-
       {/* Step 2: Add Examples */}
       {currentStep >= 2 && (
         <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-slate-50">
@@ -531,7 +527,6 @@ export default function AngluinDemo() {
           </CardContent>
         </Card>
       )}
-
       {/* Step 3: Generated Hypothesis */}
       {currentStep >= 4 && getCurrentHypothesis() && (
         <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
@@ -605,7 +600,6 @@ export default function AngluinDemo() {
           </CardContent>
         </Card>
       )}
-
       {/* Available Source Data */}
       <Card className="border-2 border-slate-200 bg-gradient-to-r from-slate-50 to-gray-50">
         <CardHeader>
@@ -668,9 +662,8 @@ export default function AngluinDemo() {
           </div>
         </CardContent>
       </Card>
-
       {/* Fun Facts */}
-      <Card className="border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+      {/**<Card className="border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-amber-700">
             <Lightbulb className="h-6 w-6" />
@@ -709,7 +702,7 @@ export default function AngluinDemo() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>*/}
     </div>
   );
 }
