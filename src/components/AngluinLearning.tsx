@@ -89,18 +89,6 @@ const TEST_HYPOTHESIS = gql`
   }
 `;
 
-const GET_PENDING_ORACLE_QUERIES = gql`
-  query GetPendingOracleQueries($sessionId: Int!) {
-    pendingOracleQueries(sessionId: $sessionId) {
-      id
-      queryType
-      queryData
-      status
-      createdAt
-    }
-  }
-`;
-
 const ANSWER_ORACLE_QUERY = gql`
   mutation AnswerOracleQuery($queryId: Int!, $response: String!) {
     answerOracleQuery(queryId: $queryId, response: $response)
